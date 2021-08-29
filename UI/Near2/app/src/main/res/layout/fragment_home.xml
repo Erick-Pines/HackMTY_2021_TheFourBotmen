@@ -23,7 +23,7 @@
         app:layout_constraintVertical_bias="0.081" />
 
     <EditText
-        android:id="@+id/EditTextName"
+        android:id="@+id/editTextName"
         android:layout_width="254dp"
         android:layout_height="53dp"
         android:hint="@string/hint_name"
@@ -36,7 +36,7 @@
         app:layout_constraintVertical_bias="0.265" />
 
     <Spinner
-        android:id="@+id/SpinnerID"
+        android:id="@+id/spinnerID"
         android:layout_width="249dp"
         android:layout_height="56dp"
         android:entries="@array/id_list"
@@ -64,6 +64,7 @@
         app:layout_constraintVertical_bias="0.516" />
 
     <androidx.appcompat.widget.SwitchCompat
+        android:id="@+id/switchInfected"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textOff="on"
@@ -79,6 +80,7 @@
         app:track="@drawable/track" />
 
     <Button
+        android:id="@+id/sendButton"
         android:layout_width="154dp"
         android:layout_height="70dp"
         android:text="@string/button_text"

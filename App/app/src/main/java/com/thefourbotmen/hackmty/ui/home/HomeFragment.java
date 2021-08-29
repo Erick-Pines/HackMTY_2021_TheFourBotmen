@@ -92,7 +92,7 @@ public class HomeFragment extends Fragment {
         btnPOSTRequest.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                User testUser = new User(2, "Pedro", false);
+                User testUser = new User(2, "Pedro", false, false);
                 toastMessage("b");
                 postRequest("user/active", testUser.user_id);
                 txtJson.setText("");

@@ -1,4 +1,4 @@
-package com.thefourbotmen.hackmty;
+package com.example.near2;
 
 import com.google.gson.annotations.SerializedName;
 

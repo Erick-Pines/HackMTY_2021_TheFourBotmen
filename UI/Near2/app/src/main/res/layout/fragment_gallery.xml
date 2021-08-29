@@ -23,6 +23,7 @@
         app:layout_constraintVertical_bias="0.361" />
 
     <androidx.appcompat.widget.SwitchCompat
+        android:id="@+id/switchActive"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:gravity="center"
@@ -39,6 +40,7 @@
         app:track="@drawable/track" />
 
     <Button
+        android:id="@+id/sendInfectedButton"
         android:layout_width="154dp"
         android:layout_height="70dp"
         android:text="@string/button_text"
