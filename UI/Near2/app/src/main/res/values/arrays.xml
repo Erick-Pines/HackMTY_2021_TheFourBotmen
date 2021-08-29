@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="id_list">
+        <item>@string/id_1</item>
+        <item>@string/id_2</item>
+        <item>@string/id_3</item>
+        <item>@string/id_4</item>
+    </string-array>
+</resources>
