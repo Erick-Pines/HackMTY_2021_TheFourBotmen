@@ -41,6 +41,8 @@ app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`);
 });
 
+///////////////////////////// GET ROUTES /////////////////////////////
+
 app.get("/", (req, res) => {
   res.send("The four Botmen");
 });
@@ -69,9 +71,13 @@ app.get("/location/latest", (req, res) => {
   res.end();
 });
 
+///////////////////////////// POST ROUTES /////////////////////////////
+
 app.post("/location/new", (req, res) => {
+  var user_id = req.body.user_id;
+
   var location = new Location({
-    user_id: req.body.user_id,
+    user_id: user_id,
     lat: req.body.lat,
     lon: req.body.lon,
   });
@@ -82,6 +88,22 @@ app.post("/location/new", (req, res) => {
       return;
     }
   });
+
+  var collisions = getUserCollisions(user_id);
+  console.log(collisions);
+
+  if (collisions.length != 0) {
+    res.json({
+      user_id: user_id,
+      is_colliding: true,
+      collisions: collisions,
+    });
+  } else {
+    res.json({
+      user_id: user_id,
+      is_colliding: false,
+    });
+  }
 
   res.end();
 });
@@ -159,11 +181,13 @@ app.post("/user/active", (req, res) => {
 
     user.save();
 
-    console.log(active_users);
+    console.log(`Active users: ${active_users}`);
   });
 
   res.end();
 });
+
+///////////////////////////// HELPER FUNCTIONS /////////////////////////////
 
 // Init function to scan all active users
 function scanActiveUsers() {
@@ -175,10 +199,11 @@ function scanActiveUsers() {
         active_users.push(user.user_id);
       }
 
-    console.log(active_users);
+    console.log(`Active users: ${active_users}`);
   });
 }
 
+// Get latest locations given a user id
 function getUserLatestLocation(user_id) {
   Location.find({ user_id: user_id })
     .sort({ date: -1 })
@@ -187,4 +212,10 @@ function getUserLatestLocation(user_id) {
       console.log(location);
       latest_locations.push(location);
     });
+}
+
+// Check collisions given a user id
+function getUserCollisions(user_id) {
+  // Return array of devices the user is colliding with
+  return [2, 3];
 }
