@@ -11,27 +11,14 @@ public class User {
     @SerializedName("is_active")
     public boolean is_active;
 
-    /*public int getId() {
-        return user_id;
+    public User(){
+        //
     }
 
-    public void setId(int user_id) {
+    public User(int user_id, String name, boolean is_active){
         this.user_id = user_id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
         this.name = name;
-    }
-
-    public boolean isActive() {
-        return is_active;
-    }
-
-    public void setActive(boolean is_active) {
         this.is_active = is_active;
-    }*/
+    }
+
 }

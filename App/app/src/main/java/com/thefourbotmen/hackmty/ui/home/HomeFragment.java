@@ -1,6 +1,12 @@
 package com.thefourbotmen.hackmty.ui.home;
 
+import android.content.Context;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,16 +25,18 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-import com.google.gson.Gson;
 import com.thefourbotmen.hackmty.R;
 import com.thefourbotmen.hackmty.User;
 import com.thefourbotmen.hackmty.databinding.FragmentHomeBinding;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class HomeFragment extends Fragment {
 
@@ -39,10 +47,16 @@ public class HomeFragment extends Fragment {
 
     private JSONObject jsonObject;
 
+    private Handler handler;
+    private LocationManager locationManager;
+    private double longitude;
+    private double latitude;
+
     private TextView txtResponse;
     private TextView txtJson;
 
-    private Button btnShowResult;
+    private Button btnGETRequest;
+    private Button btnPOSTRequest;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -64,13 +78,24 @@ public class HomeFragment extends Fragment {
         txtResponse = root.findViewById(R.id.resultText);
         txtJson = root.findViewById(R.id.jsonText);
 
-        btnShowResult = root.findViewById(R.id.showResultBtn);
+        btnGETRequest = root.findViewById(R.id.getRequestBtn);
+        btnPOSTRequest = root.findViewById(R.id.postRequestBtn);
 
-        btnShowResult.setOnClickListener(new View.OnClickListener() {
+        btnGETRequest.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 toastMessage("a");
-                request("json");
+                getRequest("json");
+            }
+        });
+
+        btnPOSTRequest.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                User testUser = new User(2, "Pedro", false);
+                toastMessage("b");
+                postRequest("user/active", testUser.user_id);
+                txtJson.setText("");
             }
         });
 
@@ -83,7 +108,7 @@ public class HomeFragment extends Fragment {
         binding = null;
     }
 
-    public void request(String route){
+    public void getRequest(String route){
 
         RequestQueue queue = Volley.newRequestQueue(getContext());
         String url ="http://192.168.1.81:3000/" + route;
@@ -113,29 +138,41 @@ public class HomeFragment extends Fragment {
                 e.printStackTrace();
             }
         }
+    }
 
-        // Request a string response from the provided URL.
-        /*StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
-            new Response.Listener<String>() {
+    public void postRequest(String route, int data) {
+
+        RequestQueue queue = Volley.newRequestQueue(getContext());
+        String url ="http://192.168.1.81:3000/" + route;
+
+        JSONObject params = new JSONObject();
+        try {
+            params.put("user_id", data);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, url, params,
+            new Response.Listener<JSONObject>() {
                 @Override
-                public void onResponse(String response) {
-                    //r = response;
-                    txtResponse.setText(response);
-                }
-            },
-            new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                txtResponse.setText("Error");
-            }
-        });
+                    public void onResponse(JSONObject response)
+                    {
+                        txtResponse.setText(response.toString());
+                        Log.d(TAG, response.toString());
+                        //pDialog.hide();
+                    }
+                },
+                new Response.ErrorListener() {
 
-        queue.add(stringRequest);*/
+                    @Override
+                    public void onErrorResponse(VolleyError error)
+                    {
+                        VolleyLog.d(TAG, "Error: " + error.getMessage());
+                        //pDialog.hide();
+                    }
+                });
 
-        //json = txtResponse.getText().toString();
-        //res = gson.fromJson(txtResponse.getText().toString(), User.class);
-        //Log.d(TAG, txtResponse.getText().toString());
-        //txtJson.setText("id: " + res.user_id + " name: \"" + res.name + " is_active: " + res.is_active);
+        queue.add(jsonObjectRequest);
     }
 
     private void toastMessage(String message) {

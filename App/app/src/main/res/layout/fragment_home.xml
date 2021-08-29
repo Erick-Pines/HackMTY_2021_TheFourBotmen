@@ -39,11 +39,20 @@
         app:layout_constraintVertical_bias="0.397" />
 
     <Button
-        android:id="@+id/showResultBtn"
+        android:id="@+id/getRequestBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="156dp"
-        android:text="Button"
+        android:text="GET"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/resultText" />
+
+    <Button
+        android:id="@+id/postRequestBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="156dp"
+        android:text="POST"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/getRequestBtn" />
 </androidx.constraintlayout.widget.ConstraintLayout>
