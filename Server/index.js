@@ -10,8 +10,8 @@ var User = require("./model/User");
 const app = express();
 const port = 3000;
 
-let active_users = [];
-let latest_locations = [];
+var active_users = [];
+var latest_locations = [];
 
 mongoose
   .connect("mongodb://localhost/hack_data", {
@@ -61,13 +61,6 @@ app.get("/json", (req, res) => {
 });
 
 app.get("/location/latest", (req, res) => {
-  for (var user_id of active_users) {
-    getUserLatestLocation(user_id);
-  }
-
-  console.log(latest_locations);
-  latest_locations = [];
-
   res.end();
 });
 
@@ -89,21 +82,39 @@ app.post("/location/new", (req, res) => {
     }
   });
 
-  var collisions = getUserCollisions(user_id);
-  console.log(collisions);
+  getUserLatestLocation(user_id);
 
-  if (collisions.length != 0) {
-    res.json({
-      user_id: user_id,
-      is_colliding: true,
-      collisions: collisions,
-    });
-  } else {
-    res.json({
-      user_id: user_id,
-      is_colliding: false,
-    });
-  }
+  setTimeout(() => {
+    console.log("Hello");
+    console.log(latest_locations);
+
+    var collisions = getCollisionList(latest_locations);
+    console.log(`Collisions: ${collisions}`);
+
+    // if (collisions.length != 0) {
+    //   res.json({
+    //     user_id: user_id,
+    //     is_colliding: true,
+    //     collisions: collisions,
+    //   });
+    // } else {
+    //   res.json({
+    //     user_id: user_id,
+    //     is_colliding: false,
+    //   });
+    // }
+  }, 2000);
+
+  //   console.log(latest_locations);
+
+  //   let getLocations = new Promise((resolve, reject) => {
+  //     getUsersLatestLocations(active_users);
+  //     resolve(true);
+  //   }).then(() => {
+  //     console.log(latest_locations);
+  //   });
+
+  //   console.log(`Locations: ${latest_locations}`);
 
   res.end();
 });
@@ -204,18 +215,40 @@ function scanActiveUsers() {
 }
 
 // Get latest locations given a user id
-function getUserLatestLocation(user_id) {
-  Location.find({ user_id: user_id })
-    .sort({ date: -1 })
-    .limit(1)
-    .then((location) => {
-      console.log(location);
-      latest_locations.push(location);
-    });
+async function getUserLatestLocation() {
+  console.log(`Active pre for: ${active_users}`);
+  for (let user_id of active_users) {
+    Location.find({ user_id: user_id })
+      .sort({ date: -1 })
+      .limit(1)
+      .then((location) => {
+        latest_locations.push(location[0]);
+      });
+  }
 }
 
-// Check collisions given a user id
-function getUserCollisions(user_id) {
-  // Return array of devices the user is colliding with
-  return [2, 3];
+function distance(lat, lon, lat2, lon2) {
+  return Math.sqrt(Math.pow(lon2 - lon, 2) + Math.pow(lat2 - lat, 2));
+}
+
+function getCollisionList(data) {
+  collisions = [];
+  for (let i = 0; i < data.length; i++) {
+    let current = data[i];
+    for (let j = 0; j < data.length; j++) {
+      if (j != i) {
+        let other = data[j];
+        // if distance is shorter than aproximately 2.5 m
+        if (
+          distance(current.lat, current.lon, other.lat, other.lon) <=
+          0.0000308642
+        )
+          collisions.push({
+            from: current.user_id,
+            with: other.user_id,
+          });
+      }
+    }
+  }
+  return collisions;
 }
