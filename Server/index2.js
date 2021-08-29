@@ -1,7 +1,6 @@
 const express = require("express");
 const path = require("path");
 const morgan = require("morgan");
-const mongoose = require("mongoose");
 
 var Location = require("./model/Location");
 var User = require("./model/User");
@@ -14,24 +13,7 @@ var active_users = [];
 var latest_locations = [];
 var min_distance = 0.0;
 
-mongoose
-  .connect("mongodb://localhost/hack_data", {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then((db) => console.log("db connected"))
-  .catch((err) => console.log(err));
-
-var db = mongoose.connection;
-
-db.once("open", () => {
-  //console.log(`Database connected to: ${"mongodb://localhost/hack_data"}`);
-  scanActiveUsers();
-});
-
-db.on("error", (error) => {
-  //console.log(error);
-});
+var user_data = [];
 
 // middlewares
 app.use(morgan("dev"));
@@ -39,7 +21,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
 app.listen(port, () => {
-  //console.log(`Example app listening at http://localhost:${port}`);
+  console.log(`Example app listening at http://localhost:${port}`);
 });
 
 ///////////////////////////// GET ROUTES /////////////////////////////
@@ -66,68 +48,51 @@ app.get("/location/latest", (req, res) => {
 });
 
 ///////////////////////////// POST ROUTES /////////////////////////////
-
+// Receive user current location
 app.post("/location/new", (req, res) => {
-  var user_id = req.body.user_id;
-  active_users = [];
-  scanActiveUsers();
+  id = req.body.user_id;
+  user_data[id] = {
+    lat: req.body.lat * 111000,
+    lon: req.body.lon * 111000,
+  };
+  var collision = false;
+  var collision_infected = false;
 
-  console.log(`${req.body.user_id}\t${req.body.lat}\t${req.body.lon}`);
-  /*
-  var location = new Location({
-    user_id: user_id,
-    lat: req.body.lat,
-    lon: req.body.lon,
+  console.log(user_data[id]);
+
+  for (var i = 0; i < user_data.length; i++) {
+    if (id != i)
+      if (user_data[i] != undefined) {
+        if (
+          distance(
+            user_data[id].lat,
+            user_data[id].lon,
+            user_data[i].lat,
+            user_data[i].lon
+          ) <= 0.00006214
+        )
+          collision = true;
+
+        if (user_data[i].is_infected) collision_infected = true;
+
+        console.log(
+          distance(
+            user_data[id].lat,
+            user_data[id].lon,
+            user_data[i].lat,
+            user_data[i].lon
+          )
+        );
+      }
+  }
+  res.json({
+    user_id: id,
+    is_colliding: collision,
+    collision_infected: collision_infected,
   });
-
-  location.save((err, document) => {
-    if (err) {
-      //console.log(err);
-      return;
-    }
-  });
-
-  getUserLatestLocation(user_id);
-
-  setTimeout(() => {
-    // //console.log("Hello");
-    // //console.log(latest_locations);
-
-    var collisions = getCollisionList(uniqueIds(latest_locations), user_id);
-    // //console.log(`Collisions: ${collisions}`);
-
-    for (entry of collisions) {
-      //console.log(`${entry.from} - ${entry.with}`);
-    }
-
-    if (collisions.length > 0) {
-      console.log("true");
-      res.json({
-        user_id: user_id,
-        is_colliding: true,
-        // collisions: collisions,
-      });
-    } else {
-      console.log("false");
-      res.json({
-        user_id: user_id,
-        is_colliding: false,
-      });
-    }
-  }, 1000);
-
-  console.log(latest_locations);
-
-  //   let getLocations = new Promise((resolve, reject) => {
-  //     getUsersLatestLocations(active_users);
-  //     resolve(true);
-  //   }).then(() => {
-  //     //console.log(latest_locations);
-  //   });
-
-  console.log(`Locations: ${latest_locations}`);*/
 });
 
+// Create new user
 app.post("/user/new", (req, res) => {
   var user = new User({
     user_id: req.body.user_id,
@@ -144,29 +109,23 @@ app.post("/user/new", (req, res) => {
   res.end();
 });
 
+// Update when a user is infected from COVID
 app.post("/user/infected", (req, res) => {
-  //console.log("User infected");
-
   let user_id = req.body.user_id;
+  let is_infected = req.body.is_infected;
 
   User.findOne({ user_id: user_id }, (err, user) => {
     if (err) {
-      //console.log(err);
+      console.log(err);
       return;
     }
 
     if (user == null) {
-      //console.log("User does not exist");
+      console.log("User does not exist");
       return;
     }
 
-    if (!user.is_infected) {
-      user.is_infected = true;
-      //console.log(`User ${user.user_id} is infected!`);
-    } else {
-      user.is_infected = false;
-      //console.log(`User ${user.user_id} is no longer infected!`);
-    }
+    user.is_infected = is_infected;
 
     user.save();
   });
@@ -176,26 +135,26 @@ app.post("/user/infected", (req, res) => {
 
 // Toggle user active/inactive state
 app.post("/user/active", (req, res) => {
-  //console.log("User active/inactive");
-  //console.log(req.body);
   let user_id = req.body.user_id;
+  let is_active = req.body.is_active;
 
   User.findOne({ user_id: user_id }, (err, user) => {
     if (err) {
-      //console.log(err);
+      console.log(err);
       return;
     }
 
     if (user == null) {
-      //console.log("User does not exist");
+      console.log("User does not exist");
       return;
     }
 
-    if (!user.is_active) {
-      active_users.push(user_id);
+    if (is_active) {
+      if (!active_users.includes(user_id)) active_users.push(user_id);
       user.is_active = true;
     } else {
-      active_users.splice(active_users.indexOf(user_id), 1);
+      if (active_users.includes(user_id))
+        active_users.splice(active_users.indexOf(user_id), 1);
       user.is_active = false;
     }
 
@@ -218,7 +177,7 @@ function scanActiveUsers() {
       for (var user of users) {
         active_users.push(user.user_id);
       }
-      //console.log(users);
+      console.log(users);
     }
 
     // //console.log(`Active users: ${active_users}`);
