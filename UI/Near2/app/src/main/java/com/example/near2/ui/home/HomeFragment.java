@@ -78,10 +78,8 @@ public class HomeFragment extends Fragment {
         if(!savedCache.getUserName().isEmpty())
             editTextName.setText(savedCache.getUserName());
 
-        if(savedCache.getUserId() >= 0) {
+        if(savedCache.getUserId() >= 0)
             editTextName.setEnabled(false);
-            spinnerID.setEnabled(false);
-        }
 
         switchInfected.setChecked(isInfected);
 
