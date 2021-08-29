@@ -10,7 +10,8 @@ var User = require("./model/User");
 const app = express();
 const port = 3000;
 
-let activeUsers = [];
+let active_users = [];
+let latest_locations = [];
 
 mongoose
   .connect("mongodb://localhost/hack_data", {
@@ -57,11 +58,22 @@ app.get("/json", (req, res) => {
   });
 });
 
+app.get("/location/latest", (req, res) => {
+  for (var user_id of active_users) {
+    getUserLatestLocation(user_id);
+  }
+
+  console.log(latest_locations);
+  latest_locations = [];
+
+  res.end();
+});
+
 app.post("/location/new", (req, res) => {
   var location = new Location({
-    user_id: 1,
-    lat: 0.0,
-    lon: 0.0,
+    user_id: req.body.user_id,
+    lat: req.body.lat,
+    lon: req.body.lon,
   });
 
   location.save((err, document) => {
@@ -92,12 +104,38 @@ app.post("/user/new", (req, res) => {
 
 app.post("/user/infected", (req, res) => {
   console.log("User infected");
+
+  let user_id = req.body.user_id;
+
+  User.findOne({ user_id: user_id }, (err, user) => {
+    if (err) {
+      console.log(err);
+      return;
+    }
+
+    if (user == null) {
+      console.log("User does not exist");
+      return;
+    }
+
+    if (!user.is_infected) {
+      user.is_infected = true;
+      console.log(`User ${user.user_id} is infected!`);
+    } else {
+      user.is_infected = false;
+      console.log(`User ${user.user_id} is no longer infected!`);
+    }
+
+    user.save();
+  });
+
   res.end();
 });
 
 // Toggle user active/inactive state
 app.post("/user/active", (req, res) => {
   console.log("User active/inactive");
+  console.log(req.body);
   let user_id = req.body.user_id;
 
   User.findOne({ user_id: user_id }, (err, user) => {
@@ -112,16 +150,16 @@ app.post("/user/active", (req, res) => {
     }
 
     if (!user.is_active) {
-      activeUsers.push(user_id);
+      active_users.push(user_id);
       user.is_active = true;
     } else {
-      activeUsers.splice(activeUsers.indexOf(user_id), 1);
+      active_users.splice(active_users.indexOf(user_id), 1);
       user.is_active = false;
     }
 
     user.save();
 
-    console.log(activeUsers);
+    console.log(active_users);
   });
 
   res.end();
@@ -134,9 +172,19 @@ function scanActiveUsers() {
     if (err) console.log("Init: could not retrieve active users");
     else
       for (var user of users) {
-        activeUsers.push(user.user_id);
+        active_users.push(user.user_id);
       }
 
-    console.log(activeUsers);
+    console.log(active_users);
   });
+}
+
+function getUserLatestLocation(user_id) {
+  Location.find({ user_id: user_id })
+    .sort({ date: -1 })
+    .limit(1)
+    .then((location) => {
+      console.log(location);
+      latest_locations.push(location);
+    });
 }
