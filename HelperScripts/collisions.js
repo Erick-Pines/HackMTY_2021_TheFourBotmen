@@ -1,5 +1,5 @@
 //test data
-arr=[
+/*arr=[
 	{
 		id: "612af",
 		lon: 0.0,
@@ -15,7 +15,7 @@ arr=[
 		lon: 1.0,
 		lat: 0.0
 	}
-]
+]*/
 function distance(lat,lon,lat2,lon2){
 	return Math.sqrt(Math.pow(lon2-lon,2)+Math.pow(lat2-lat,2));
 }
@@ -30,8 +30,8 @@ function getCollisionList(data){
 				if(distance(current.lat,current.lon,
 					other.lat, other.lon) <= 0.0000308642)
 					collisions.push({
-						from: current.id,
-						with: other.id});
+						from: current.user_id,
+						with: other.user_id});
 			}
 		}
 	}
@@ -43,17 +43,3 @@ console.log(getCollisionList(arr));
 
 
 
-/*
-41.921100757525394, -87.78309129869945
-41.921100757525394, -87.78309129869945
- 0.0000617284
- 
- 0.000010288
-41.921101043525394, -87.78309129869945
-  0.000617284
-  0.0000617284
-  0.0000617284
-  0.0000308642
-*/
-//Collision distance
-//0.0000308642
