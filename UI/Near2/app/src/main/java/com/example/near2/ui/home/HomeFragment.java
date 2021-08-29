@@ -1,5 +1,7 @@
 package com.example.near2.ui.home;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,6 +20,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.example.near2.HttpRequests;
 import com.example.near2.R;
+import com.example.near2.SavedCache;
 import com.example.near2.User;
 import com.example.near2.databinding.FragmentHomeBinding;
 
@@ -32,6 +35,8 @@ public class HomeFragment extends Fragment {
 
     private JSONObject jsonObject;
     private HttpRequests httpRequests;
+
+    private SavedCache savedCache;
 
     private EditText editTextName;
     private Spinner spinnerID;
@@ -59,6 +64,7 @@ public class HomeFragment extends Fragment {
         });*/
 
         httpRequests = new HttpRequests(getContext());
+        savedCache = new SavedCache(getContext());
 
         editTextName = root.findViewById(R.id.editTextName);
         spinnerID = root.findViewById(R.id.spinnerID);
@@ -66,8 +72,18 @@ public class HomeFragment extends Fragment {
         btnSend = root.findViewById(R.id.sendButton);
 
         userId = 1;
-        isActive = false;
-        isInfected = false;
+        isActive = savedCache.isUserActive();
+        isInfected = savedCache.isUserInfected();
+
+        if(!savedCache.getUserName().isEmpty())
+            editTextName.setText(savedCache.getUserName());
+
+        if(savedCache.getUserId() >= 0) {
+            editTextName.setEnabled(false);
+            spinnerID.setEnabled(false);
+        }
+
+        switchInfected.setChecked(isInfected);
 
         spinnerID.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -91,12 +107,19 @@ public class HomeFragment extends Fragment {
         btnSend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(!editTextName.getText().toString().isEmpty()) {
+
+                if(savedCache.getUserId() < 0) {
                     User user = new User(userId, editTextName.getText().toString(), isActive, isInfected);
                     httpRequests.addUser(user);
                 }
-                else
-                    toastMessage("Please fill in all the fields");
+
+                savedCache.saveUserId(userId);
+                savedCache.saveUserName(editTextName.getText().toString());
+                savedCache.saveUserInfected(isInfected);
+                savedCache.saveUserActive(isActive);
+
+                if(!httpRequests.setUserInfected(userId, isInfected))
+                    toastMessage("Error while updating data");
             }
         });
 

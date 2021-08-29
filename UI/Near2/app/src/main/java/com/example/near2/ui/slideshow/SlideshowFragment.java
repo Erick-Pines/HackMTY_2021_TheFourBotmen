@@ -88,7 +88,7 @@ public class SlideshowFragment extends Fragment implements LocationListener {
                 0, this
         );
         Criteria ct=new Criteria();
-        ct.setAccuracy(Criteria.ACCURACY_COARSE);
+        ct.setAccuracy(Criteria.ACCURACY_FINE);
         locationManager.requestSingleUpdate(ct,this, Looper.myLooper());
 
     }

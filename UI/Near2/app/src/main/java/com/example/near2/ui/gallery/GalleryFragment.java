@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -17,6 +18,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.example.near2.HttpRequests;
 import com.example.near2.R;
+import com.example.near2.SavedCache;
 import com.example.near2.databinding.FragmentGalleryBinding;
 
 public class GalleryFragment extends Fragment {
@@ -25,6 +27,7 @@ public class GalleryFragment extends Fragment {
     private FragmentGalleryBinding binding;
 
     private HttpRequests httpRequests;
+    private SavedCache savedCache;
 
     private SwitchCompat switchActive;
     private Button btnSend;
@@ -48,11 +51,13 @@ public class GalleryFragment extends Fragment {
         });*/
 
         httpRequests = new HttpRequests(getContext());
+        savedCache = new SavedCache(getContext());
 
         switchActive = root.findViewById(R.id.switchActive);
         btnSend = root.findViewById(R.id.sendInfectedButton);
 
-        isActive = false;
+        isActive = savedCache.isUserActive();
+        switchActive.setChecked(isActive);
 
         switchActive.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -64,7 +69,8 @@ public class GalleryFragment extends Fragment {
         btnSend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                httpRequests.setUserActive(1);
+                if(!httpRequests.setUserActive(savedCache.getUserId(), isActive))
+                    Toast.makeText(getContext(), "Error while updating data", Toast.LENGTH_SHORT).show();
             }
         });
 

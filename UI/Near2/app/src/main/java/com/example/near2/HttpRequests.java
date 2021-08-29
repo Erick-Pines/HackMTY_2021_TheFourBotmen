@@ -26,13 +26,16 @@ public class HttpRequests {
 
     private Context context;
     private RequestQueue queue;
+    private JSONObject res;
+    private boolean success = false;
+    private boolean notif = false;
 
     public HttpRequests(Context context) {
         this.context = context;
         queue = Volley.newRequestQueue(context);
     }
 
-    public void addUser(User user) {
+    public boolean addUser(User user) {
 
         JSONObject params = new JSONObject();
 
@@ -45,10 +48,11 @@ public class HttpRequests {
             e.printStackTrace();
         }
 
-        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, url + "user/new", params,
+        JsonObjectRequest addUserRequest = new JsonObjectRequest(Request.Method.POST, url + "user/new", params,
             new Response.Listener<JSONObject>() {
                 @Override
                 public void onResponse(JSONObject response) {
+                    success = true;
                     Log.d(TAG, response.toString());
                 }
             },
@@ -57,65 +61,130 @@ public class HttpRequests {
                 @Override
                 public void onErrorResponse(VolleyError error) {
                     VolleyLog.d(TAG, "Error: " + error.getMessage());
+                    success = false;
                 }
         });
 
-        queue.add(jsonObjectRequest);
+        queue.add(addUserRequest);
+
+        return success;
 
     }
 
-    public void setUserInfected(int user_id) {
+    public boolean sendUserLocation(int user_id, double longitude, double latitude) {
+
+        JSONObject params = new JSONObject();
+        res = new JSONObject();
+
+        try {
+            params.put("user_id", user_id);
+            params.put("lon", longitude);
+            params.put("lat", latitude);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        Log.d(TAG, params.toString());
+
+        JsonObjectRequest locationRequest = new JsonObjectRequest(Request.Method.POST, url + "location/new", params,
+            new Response.Listener<JSONObject>() {
+                @Override
+                public void onResponse(JSONObject response) {
+                    res = response;
+                    //Log.d(TAG, params.toString());
+                    try {
+                        //Log.d(TAG, Boolean.toString(response.getBoolean("is_colliding")));
+                        if(response.getBoolean("is_colliding"))
+                            notif = true;
+                        else
+                            notif = false;
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+            },
+            new Response.ErrorListener() {
+
+                @Override
+                public void onErrorResponse(VolleyError error) {
+                    notif = false;
+                    VolleyLog.d(TAG, "Error: " + error.getMessage());
+                }
+        });
+
+        queue.add(locationRequest);
+
+        //Log.d(TAG, Boolean.toString(notif));
+        return notif;
+
+    }
+
+    public boolean setUserInfected(int user_id, boolean is_infected) {
 
         JSONObject params = new JSONObject();
 
         try {
             params.put("user_id", user_id);
+            params.put("is_infected", is_infected);
         } catch (JSONException e) {
             e.printStackTrace();
         }
 
-        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, url + "user/infected", params,
-                new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        Log.d(TAG, response.toString());
-                    }
-                },
-                new Response.ErrorListener() {
+        JsonObjectRequest userInfectedRequest = new JsonObjectRequest(Request.Method.POST, url + "user/infected", params,
+            new Response.Listener<JSONObject>() {
+                @Override
+                public void onResponse(JSONObject response) {
+                    success = true;
+                    Log.d(TAG, response.toString());
+                }
+            },
+            new Response.ErrorListener() {
 
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        VolleyLog.d(TAG, "Error: " + error.getMessage());
-                    }
-                });
+                @Override
+                public void onErrorResponse(VolleyError error) {
+                    success = false;
+                    VolleyLog.d(TAG, "Error: " + error.getMessage());
+                }
+        });
 
-        queue.add(jsonObjectRequest);
+        queue.add(userInfectedRequest);
+
+        return success;
+
     }
 
-    public void setUserActive(int user_id) {
+    public boolean setUserActive(int user_id, boolean is_active) {
 
         JSONObject params = new JSONObject();
 
         try {
             params.put("user_id", user_id);
+            params.put("is_active", is_active);
         } catch (JSONException e) {
             e.printStackTrace();
         }
 
-        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, url + "user/active", params,
-                new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        Log.d(TAG, response.toString());
-                    }
-                },
-                new Response.ErrorListener() {
+        JsonObjectRequest userActiveRequest = new JsonObjectRequest(Request.Method.POST, url + "user/active", params,
+            new Response.Listener<JSONObject>() {
+                @Override
+                public void onResponse(JSONObject response) {
+                    success = true;
+                    //Log.d(TAG, response.toString());
+                }
+            },
+            new Response.ErrorListener() {
 
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        VolleyLog.d(TAG, "Error: " + error.getMessage());
-                    }
-                });
+                @Override
+                public void onErrorResponse(VolleyError error) {
+                    success = false;
+                    //VolleyLog.d(TAG, "Error: " + error.getMessage());
+                }
+        });
+
+        queue.add(userActiveRequest);
+
+        return success;
+
     }
 
 }
