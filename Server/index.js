@@ -88,21 +88,24 @@ app.post("/location/new", (req, res) => {
     console.log("Hello");
     console.log(latest_locations);
 
-    var collisions = getCollisionList(latest_locations);
+    var collisions = getCollisionList(latest_locations, user_id);
     console.log(`Collisions: ${collisions}`);
+    for (entry of collisions) {
+      console.log(`${entry.from} - ${entry.with}`);
+    }
 
-    // if (collisions.length != 0) {
-    //   res.json({
-    //     user_id: user_id,
-    //     is_colliding: true,
-    //     collisions: collisions,
-    //   });
-    // } else {
-    //   res.json({
-    //     user_id: user_id,
-    //     is_colliding: false,
-    //   });
-    // }
+    if (collisions.length > 0) {
+      res.json({
+        user_id: user_id,
+        is_colliding: true,
+        // collisions: collisions,
+      });
+    } else {
+      res.json({
+        user_id: user_id,
+        is_colliding: false,
+      });
+    }
   }, 2000);
 
   //   console.log(latest_locations);
@@ -115,8 +118,6 @@ app.post("/location/new", (req, res) => {
   //   });
 
   //   console.log(`Locations: ${latest_locations}`);
-
-  res.end();
 });
 
 app.post("/user/new", (req, res) => {
@@ -231,24 +232,26 @@ function distance(lat, lon, lat2, lon2) {
   return Math.sqrt(Math.pow(lon2 - lon, 2) + Math.pow(lat2 - lat, 2));
 }
 
-function getCollisionList(data) {
-  collisions = [];
+function getCollisionList(data, id) {
+  let collisions = [];
+  let current_index = 0;
   for (let i = 0; i < data.length; i++) {
-    let current = data[i];
-    for (let j = 0; j < data.length; j++) {
-      if (j != i) {
-        let other = data[j];
-        // if distance is shorter than aproximately 2.5 m
-        if (
-          distance(current.lat, current.lon, other.lat, other.lon) <=
-          0.0000308642
-        )
-          collisions.push({
-            from: current.user_id,
-            with: other.user_id,
-          });
-      }
+    if (data[i].user_id == id) current_index = i;
+  }
+  let current = data[current_index];
+  for (let j = 0; j < data.length; j++) {
+    let other = data[j];
+    if (current_index != j) {
+      // if distance is shorter than aproximately 2.5 m
+      if (
+        distance(current.lat, current.lon, other.lat, other.lon) <= 0.0000308642
+      )
+        collisions.push({
+          from: current.user_id,
+          with: other.user_id,
+        });
     }
   }
+
   return collisions;
 }
